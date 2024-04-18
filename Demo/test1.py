@@ -29,7 +29,7 @@ input_image  = file_path
 img = cv2.imread(input_image, cv2.IMREAD_COLOR)
 
 # Resize image to workable size
-dim_limit = 2000
+dim_limit = 1920
 max_dim = max(img.shape)
 if max_dim > dim_limit:
     resize_scale = dim_limit / max_dim
@@ -45,8 +45,11 @@ orig_img = img.copy()
 # Repeated Closing operation to remove text from the document. (Thao tác đóng lặp lại để xóa văn bản khỏi tài liệu)
 kernel = np.ones((5,5),np.uint8)
 img = cv2.morphologyEx(img, cv2.MORPH_CLOSE, kernel, iterations= 3)
-#kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
-#img = cv2.morphologyEx(img, cv2.MORPH_OPEN, kernel)
+img = cv2.morphologyEx(img, cv2.MORPH_OPEN, kernel)
+
+# Hiển thị ảnh đã mở
+#cv2.imshow('Ảnh đã mở', img)
+#cv2.waitKey(0)
 
 
 plt.figure(figsize = (10,7))
@@ -63,9 +66,8 @@ mask2 = np.where((mask==2)|(mask==0),0,1).astype('uint8')
 img = img*mask2[:,:,np.newaxis]
 
 plt.figure(figsize = (10,7))
-plt.imshow(img[:,:,::-1])
+plt.imshow(img)
 plt.show()
-
 
 gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 gray = cv2.GaussianBlur(gray, (11, 11), 0)
@@ -176,14 +178,12 @@ plt.show()
 # Chuyển thành xám
 gray = cv2.cvtColor(final[:,:,::-1], cv2.COLOR_BGR2GRAY)
 
-# Simple thresholding
 
 # Adaptive thresholding (experiment with parameters)
 adaptive_thresh = cv2.adaptiveThreshold(
     gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 41, 8
 )
-
-#, output_final = cv2.threshold(gray,200,255,cv2.THRESH_BINARY)
+_, output_final = cv2.threshold(gray,200,255,cv2.THRESH_BINARY)
 # Display both thresholded images
 cv2.imshow("Adaptive Threshold", adaptive_thresh)
 
@@ -194,18 +194,21 @@ plt.imshow(adaptive_thresh)
 plt.show()
 
 # Display both thresholded images
-cv2.imshow("Adaptive Threshold", adaptive_thresh)
+cv2.imshow("Adaptive Threshold", output_final)
 
 # Wait for a key press to close windows
 cv2.waitKey(0)
 cv2.destroyAllWindows()
-plt.imshow(adaptive_thresh)
+plt.imshow(output_final)
 plt.show()
+
+
+
 
 
 # Nhận dạng Text
-myconfig = r" --psm 11 --oem 3"
-img = adaptive_thresh
+myconfig = r" --psm 3 --oem 3"
+img = output_final
 
 height, width = img.shape
 
