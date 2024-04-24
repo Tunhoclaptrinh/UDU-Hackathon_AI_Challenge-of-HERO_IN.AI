@@ -15,7 +15,7 @@ def set_png_as_page_bg(png_file):
     page_bg_img = '''
     <style>
     .stApp {
-    background-image: url("https://img.freepik.com/free-vector/blue-abstract-gradient-wave-vector-background_53876-111548.jpg?w=1060&t=st=1713628676~exp=1713629276~hmac=fea7738cf355af5265c91425389e5de362bc1871d8908b80597e9d1e62f235a5");
+    background-image: url("https://assets-global.website-files.com/64be86eaa29fa71f24b00685/64be86eaa29fa71f24b00fee_Free%20OCR.png");
     background-size: cover;
     }
     </style>
@@ -5829,10 +5829,16 @@ def get_image_download_link(img, filename, text):
 
 ##########################################################################################################
 # Set title.
-st.sidebar.title('Document Scanner')
+st.title('Document Scanner')
 set_png_as_page_bg("https://img.freepik.com/free-vector/blue-abstract-gradient-wave-vector-background_53876-111548.jpg?w=1060&t=st=1713628676~exp=1713629276~hmac=fea7738cf355af5265c91425389e5de362bc1871d8908b80597e9d1e62f235a5")
+set_header()
+include_external_stylesheet("https://assets-global.website-files.com/64be86eaa29fa71f24b00661/css/docsumo-staging.webflow.0de3759f2.css")
+text = """
+        <p style='margin-bottom: 40px;font-size: 1.5em; color : white'>Our deep learning data extraction technology immensely reduces manual errors and saves countless hours every month.</p>
+        """
+st.markdown(text,unsafe_allow_html=True)
 # Specify canvas parameters in application
-uploaded_file = st.sidebar.file_uploader("Upload Image of Document:", type=["png", "jpg"])
+uploaded_file = st.file_uploader("Upload Image of Document:", type=["png", "jpg"])
 image = None
 final = None
 col1, col2 = st.columns(2)
