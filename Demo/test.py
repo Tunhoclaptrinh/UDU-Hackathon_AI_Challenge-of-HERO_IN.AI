@@ -4,16 +4,13 @@ import matplotlib.pyplot as plt
 import PySimpleGUI as sg
 import pytesseract
 import PIL.Image
-
-
-
 from PIL import Image
+import aspose.words as aw
 
 def chon_file():
   """Mở hộp thoại chọn file và trả về đường dẫn file được chọn."""
   file_path = sg.popup_get_file("Chọn file", no_window=True)
   return file_path
-
 file_path = chon_file()
 
 if file_path:
@@ -21,12 +18,16 @@ if file_path:
 else:
   print("Hủy chọn file.")
 
-
 # Tên file ảnh đầu vào
 input_image  = file_path
 
 # Đọc ảnh
 img = cv2.imread(input_image, cv2.IMREAD_COLOR)
+
+#from removebgmaster import removebg
+#from removebg import RemoveBg
+#rmbg = RemoveBg("61MqkgZ1EUqTAaQNHPTMnS89", "error.log")
+#img = rmbg.remove_background_from_img_file(input_image)
 
 # Resize image to workable size
 dim_limit = 2000
@@ -41,13 +42,11 @@ plt.show()
 # Making Copy of original image.
 orig_img = img.copy()
 
-
 # Repeated Closing operation to remove text from the document. (Thao tác đóng lặp lại để xóa văn bản khỏi tài liệu)
 kernel = np.ones((5,5),np.uint8)
 img = cv2.morphologyEx(img, cv2.MORPH_CLOSE, kernel, iterations= 3)
 #kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
 #img = cv2.morphologyEx(img, cv2.MORPH_OPEN, kernel)
-
 
 plt.figure(figsize = (10,7))
 plt.imshow(img[:,:,::-1])
@@ -65,7 +64,6 @@ img = img*mask2[:,:,np.newaxis]
 plt.figure(figsize = (10,7))
 plt.imshow(img[:,:,::-1])
 plt.show()
-
 
 gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 gray = cv2.GaussianBlur(gray, (11, 11), 0)
@@ -128,8 +126,7 @@ for index, c in enumerate(corners):
 
 # Rearranging the order of the corner points.
 corners = order_points(corners)
-
-print(corners)
+#print(corners)
 
 plt.figure(figsize = (10,7))
 plt.imshow(con)
@@ -152,7 +149,7 @@ destination_corners = [
 		[maxWidth, 0],
 		[maxWidth, maxHeight],
 		[0, maxHeight]]
-print(destination_corners)
+#print(destination_corners)
 
 # Getting the homography.
 homography = cv2.getPerspectiveTransform(np.float32(corners), np.float32(destination_corners))
@@ -175,15 +172,16 @@ plt.show()
 
 # Chuyển thành xám
 gray = cv2.cvtColor(final[:,:,::-1], cv2.COLOR_BGR2GRAY)
+plt.imshow(gray)
+plt.show()
 
 # Simple thresholding
-
 # Adaptive thresholding (experiment with parameters)
 adaptive_thresh = cv2.adaptiveThreshold(
     gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 41, 8
 )
 
-#, output_final = cv2.threshold(gray,200,255,cv2.THRESH_BINARY)
+#_, output_final = cv2.threshold(gray,200,255,cv2.THRESH_BINARY)
 # Display both thresholded images
 cv2.imshow("Adaptive Threshold", adaptive_thresh)
 
@@ -193,31 +191,100 @@ cv2.destroyAllWindows()
 plt.imshow(adaptive_thresh)
 plt.show()
 
-# Display both thresholded images
-cv2.imshow("Adaptive Threshold", adaptive_thresh)
+def noise_removal(image):
+    import numpy as np
+    kernel = np.ones((1, 1), np.uint8)
+    image = cv2.dilate(image, kernel, iterations=1)
+    kernel = np.ones((1, 1), np.uint8)
+    image = cv2.erode(image, kernel, iterations=1)
+    image = cv2.morphologyEx(image, cv2.MORPH_CLOSE, kernel)
+    image = cv2.medianBlur(image, 3)
+    return (image)
 
-# Wait for a key press to close windows
+'''no_noise = noise_removal(adaptive_thresh)
+
+cv2.imshow("Noise Removal", no_noise)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
-plt.imshow(adaptive_thresh)
+plt.imshow(no_noise)
 plt.show()
+'''
+def thin_font(image):
+    import numpy as np
+    image = cv2.bitwise_not(image)
+    kernel = np.ones((2,2),np.uint8)
+    image = cv2.erode(image, kernel, iterations=1)
+    image = cv2.bitwise_not(image)
+    return (image)
+'''
+eroded_image = thin_font(no_noise)
+cv2.imshow(" thin_font", eroded_image)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
+plt.imshow(eroded_image)
+plt.show()
+'''
 
+def thick_font(image):
+    import numpy as np
+    image = cv2.bitwise_not(image)
+    kernel = np.ones((2,2),np.uint8)
+    image = cv2.dilate(image, kernel, iterations=1)
+    image = cv2.bitwise_not(image)
+    return (image)
+
+'''dilated_image = thick_font(no_noise)
+cv2.imshow(" thick_font", dilated_image)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
+plt.imshow(dilated_image)
+plt.show()
+# Display both thresholded images
+#cv2.imshow("Adaptive Threshold", adaptive_thresh)
+'''
+# Wait for a key press to close windows
+#cv2.waitKey(0)
+#cv2.destroyAllWindows()
+#plt.imshow(adaptive_thresh)
+#plt.show()
+
+#Lưu ảnh
+#save_path = sg.popup_get_file("Save scanned document",  save_as=True, file_types=(("PNG Files", "*.png"),))
+#cv2.imwrite(save_path, adaptive_thresh)
 
 # Nhận dạng Text
-myconfig = r" --psm 11 --oem 3"
-img = adaptive_thresh
+def extract_Text(thresh):
+    myconfig = r" --psm 11 --oem 3"
+    img = thresh
 
-height, width = img.shape
+    #Boxes
+    height, width = img.shape
 
-boxes = pytesseract.image_to_boxes(img, config=myconfig)
-text = pytesseract.image_to_string(img, config=myconfig)
-for box in boxes.splitlines():
-    box = box.split(' ')
-    img = cv2.rectangle(img, (int(box[1]), height -int(box[2])), (int(box[3]), height -int(box[4])), (0, 255, 0), 2)
+    boxes = pytesseract.image_to_boxes(img, config=myconfig)
+    text = pytesseract.image_to_string(img, config=myconfig)
+    for box in boxes.splitlines():
+        box = box.split(' ')
+        img = cv2.rectangle(img, (int(box[1]), height -int(box[2])), (int(box[3]), height -int(box[4])), (0, 255, 0), 2)
 
 
-print(text)
-#print(boxes)
+    print(text)
+    #print(boxes)
 
-cv2.imshow('Img', img)
-cv2.waitKey(0)
+    cv2.imshow('Img', img)
+    cv2.waitKey(0)
+    return text
+
+
+def save_doc(Text):
+    # tạo đối tượng tài liệu
+    doc = aw.Document()
+
+    # tạo một đối tượng trình tạo tài liệu
+    builder = aw.DocumentBuilder(doc)
+
+    # thêm văn bản vào tài liệu
+    builder.write(Text)
+
+    # lưu tài liệu
+    doc.save("out.docx")
+save_doc(extract_Text(adaptive_thresh))
