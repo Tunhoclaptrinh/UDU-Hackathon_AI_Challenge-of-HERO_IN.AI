@@ -7,8 +7,10 @@ import io
 import base64
 from PIL import Image
 import pytesseract
+
 # Hàm đặt hình nền trang
-import streamlit as st
+pytesseract.pytesseract.tesseract_cmd = "D:\Code file\Python AI"
+
 
 
 def set_png_as_page_bg(png_file):
@@ -5716,6 +5718,15 @@ def include_external_stylesheet(href):
         padding-top: 10px;
         }
                 </style>""", unsafe_allow_html=True)
+def set_footer():
+    footer="""
+        <div class="footer">
+        <p>Viện khoa học kĩ thuật bưu điện - Học viện bưu chính viễn thông CNTT </p>
+        <p>EXTRACT DOCUMENT FROM IMAGE</p>
+        <p>This product was developed by HERO_IN.AI</p>
+        </div>
+        """
+    st.markdown(footer,unsafe_allow_html=True)
 
 
 STREAMLIT_STATIC_PATH = pathlib.Path(st.__path__[0]) / 'static'
@@ -5829,10 +5840,11 @@ def get_image_download_link(img, filename, text):
 
 ##########################################################################################################
 # Set title.
-st.title('Document Scanner')
+include_external_stylesheet("https://assets-global.website-files.com/64be86eaa29fa71f24b00661/css/docsumo-staging.webflow.0de3759f2.css")
 set_png_as_page_bg("https://img.freepik.com/free-vector/blue-abstract-gradient-wave-vector-background_53876-111548.jpg?w=1060&t=st=1713628676~exp=1713629276~hmac=fea7738cf355af5265c91425389e5de362bc1871d8908b80597e9d1e62f235a5")
 set_header()
-include_external_stylesheet("https://assets-global.website-files.com/64be86eaa29fa71f24b00661/css/docsumo-staging.webflow.0de3759f2.css")
+st.title('Document Scanner')
+#set_footer()
 text = """
         <p style='margin-bottom: 40px;font-size: 1.5em; color : white'>Our deep learning data extraction technology immensely reduces manual errors and saves countless hours every month.</p>
         """
@@ -5842,14 +5854,17 @@ uploaded_file = st.file_uploader("Upload Image of Document:", type=["png", "jpg"
 image = None
 final = None
 col1, col2 = st.columns(2)
+text = """
+        <div class="div-block-307"><div id="try_sample-block" class="div-block-256"><a href="#" id="try-sample" class="button-2 w-button">Try our sample</a><div class="text-block-59">Don't have a document?</div></div></div>
+        """
 
 if uploaded_file is not None:
 
     # Convert the file to an opencv image.
     file_bytes = np.asarray(bytearray(uploaded_file.read()), dtype=np.uint8)
     image = cv2.imdecode(file_bytes, 1)
-
-    manual = st.sidebar.checkbox('Adjust Manually', False)
+    #extracted_text = pytesseract.image_to_string(image, lang='vie')
+    manual = st.checkbox('Adjust Manually', False)
     h, w = image.shape[:2]
     h_, w_ = int(h * 400 / w), 400
 
@@ -5869,8 +5884,8 @@ if uploaded_file is not None:
             drawing_mode='polygon',
             key="canvas",
         )
-        st.sidebar.caption('Happy with the manual selection?')
-        if st.sidebar.button('Get Scanned'):
+        st.caption('Happy with the manual selection?')
+        if st.button('Get Scanned'):
             # Do something interesting with the image data and paths
             points = order_points([i[1:3] for i in canvas_result.json_data['objects'][0]['path'][:4]])
             points = np.multiply(points, w / 400)
@@ -5893,7 +5908,11 @@ if uploaded_file is not None:
     if final is not None:
         # Display link.
         result = Image.fromarray(final[:, :, ::-1])
-        st.sidebar.markdown(get_image_download_link(result, 'output.png', 'Download ' + 'Output'),
+        st.markdown(get_image_download_link(result, 'output.png', 'Download ' + 'Output'),
                             unsafe_allow_html=True)
-       
-   
+        st.subheader("Văn bản đã trích xuất")
+        extracted_text = pytesseract.image_to_string(image)
+
+        # Display the extracted text
+        st.text(extracted_text)
+    
